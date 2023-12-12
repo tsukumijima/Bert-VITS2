@@ -1,12 +1,24 @@
 import sys
 
 import torch
+from huggingface_hub import hf_hub_download
+from pathlib import Path
 from transformers import ClapModel, ClapProcessor
 
 from config import config
 
 models = dict()
 LOCAL_PATH = "./emotional/clap-htsat-fused"
+if not Path(LOCAL_PATH).joinpath('pytorch_model.bin').exists():
+    if config.mirror.lower() == "openi":
+        import openi
+        openi.model.download_model(
+            "Stardust_minus/Bert-VITS2", 'clap-htsat-fused', "./emotional"
+        )
+    else:
+        hf_hub_download(
+            'laion/clap-htsat-fused', 'pytorch_model.bin', local_dir=LOCAL_PATH, local_dir_use_symlinks=False
+        )
 processor = ClapProcessor.from_pretrained(LOCAL_PATH)
 
 
