@@ -26,7 +26,7 @@ resample:
 # 注意， “:” 后需要加空格
 preprocess_text:
   # 原始文本文件路径，文本格式应为{wav_path}|{speaker_name}|{language}|{text}。
-  transcription_path: "filelists/你的数据集文本.list"
+  transcription_path: "filelists/text.list"
   # 数据清洗后文本路径，可以不填。不填则将在原始文本目录生成
   cleaned_path: ""
   # 训练集路径
@@ -93,7 +93,7 @@ train_ms:
   # 关闭此项可以节约接近50%的磁盘空间，但是可能导致实际训练速度变慢和更高的CPU使用率。
   spec_cache: False
   # 保存的检查点数量，多于此数目的权重会被删除来节省空间。
-  keep_ckpts: 8
+  keep_ckpts: -1
 
 
 # webui webui配置
