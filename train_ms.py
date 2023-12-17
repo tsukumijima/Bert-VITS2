@@ -277,12 +277,9 @@ def run():
                 if "skip_optimizer" in hps.train
                 else True,
             )
-            if not optim_g.param_groups[0].get("initial_lr"):
-                optim_g.param_groups[0]["initial_lr"] = g_resume_lr
-            if not optim_d.param_groups[0].get("initial_lr"):
-                optim_d.param_groups[0]["initial_lr"] = d_resume_lr
-            if not optim_dur_disc.param_groups[0].get("initial_lr"):
-                optim_dur_disc.param_groups[0]["initial_lr"] = dur_resume_lr
+            optim_g.param_groups[0]["initial_lr"] = hps.train.learning_rate
+            optim_d.param_groups[0]["initial_lr"] = hps.train.learning_rate
+            optim_dur_disc.param_groups[0]["initial_lr"] = hps.train.learning_rate
 
         epoch_str = max(epoch_str, 1)
         # global_step = (epoch_str - 1) * len(train_loader)
@@ -297,18 +294,19 @@ def run():
         epoch_str = 1
         global_step = 0
 
-    scheduler_g = torch.optim.lr_scheduler.ExponentialLR(
-        optim_g, gamma=hps.train.lr_decay, last_epoch=epoch_str - 2
-    )
-    scheduler_d = torch.optim.lr_scheduler.ExponentialLR(
-        optim_d, gamma=hps.train.lr_decay, last_epoch=epoch_str - 2
-    )
+    def lr_lambda(epoch):
+        if epoch < hps.train.warmup_epochs:
+            return epoch / hps.train.warmup_epochs
+        else:
+            return hps.train.lr_decay ** (epoch - hps.train.warmup_epochs)
+
+    scheduler_g = torch.optim.lr_scheduler.LambdaLR(optimizer=optim_g, lr_lambda=lr_lambda, last_epoch=max(epoch_str - 2, 1))
+    scheduler_d = torch.optim.lr_scheduler.LambdaLR(optimizer=optim_d, lr_lambda=lr_lambda, last_epoch=max(epoch_str - 2, 1))
+
     if net_dur_disc is not None:
         if not optim_dur_disc.param_groups[0].get("initial_lr"):
             optim_dur_disc.param_groups[0]["initial_lr"] = dur_resume_lr
-        scheduler_dur_disc = torch.optim.lr_scheduler.ExponentialLR(
-            optim_dur_disc, gamma=hps.train.lr_decay, last_epoch=epoch_str - 2
-        )
+        scheduler_dur_disc = torch.optim.lr_scheduler.LambdaLR(optimizer=optim_d, lr_lambda=lr_lambda, last_epoch=max(epoch_str - 2, 1))
     else:
         scheduler_dur_disc = None
     scaler = GradScaler(enabled=hps.train.fp16_run)
@@ -342,8 +340,6 @@ def run():
                 None,
                 None,
             )
-        scheduler_g.step()
-        scheduler_d.step()
         if net_dur_disc is not None:
             scheduler_dur_disc.step()
 
@@ -615,6 +611,8 @@ def train_and_evaluate(
                         sort_by_time=True,
                     )
 
+        scheduler_g.step()
+        scheduler_d.step()
         global_step += 1
 
     gc.collect()
