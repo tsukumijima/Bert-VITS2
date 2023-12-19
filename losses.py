@@ -1,6 +1,10 @@
 import torch
 import torchaudio
+from huggingface_hub import hf_hub_download
+from pathlib import Path
 from transformers import AutoModel
+
+from config import config
 
 
 def feature_loss(fmap_r, fmap_g):
@@ -63,6 +67,18 @@ def kl_loss(z_p, logs_q, m_p, logs_p, z_mask):
 class WavLMLoss(torch.nn.Module):
     def __init__(self, model, wd, model_sr, slm_sr=16000):
         super(WavLMLoss, self).__init__()
+
+        if not Path(model).joinpath('pytorch_model.bin').exists():
+            if config.mirror.lower() == "openi":
+                import openi
+                openi.model.download_model(
+                    "Stardust_minus/Bert-VITS2", 'wavlm-base-plus', "./slm"
+                )
+            else:
+                hf_hub_download(
+                    'microsoft/wavlm-base-plus', 'pytorch_model.bin', local_dir=model, local_dir_use_symlinks=False
+                )
+
         self.wavlm = AutoModel.from_pretrained(model)
         self.wd = wd
         self.resample = torchaudio.transforms.Resample(model_sr, slm_sr)
