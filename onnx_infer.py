@@ -1,4 +1,4 @@
-from onnx_modules.V220_OnnxInference import OnnxInferenceSession
+ï»¿from onnx_modules.V220_OnnxInference import OnnxInferenceSession
 import numpy as np
 Session = OnnxInferenceSession(
         {
@@ -12,9 +12,8 @@ Session = OnnxInferenceSession(
         Providers = ["CPUExecutionProvider"]
     )
 
-#ÕâÀïµÄÊäÈëºÍÔ­°æÊÇÒ»ÑùµÄ£¬Ö»ĞèÒªÔÚÔ­°æÔ¤´¦Àí½á¹û³öÀ´Ö®ºó¼ÓÉÏ.numpy()¼´¿É
-x = np.expand_dims(
-    np.array(
+#è¿™é‡Œçš„è¾“å…¥å’ŒåŸç‰ˆæ˜¯ä¸€æ ·çš„ï¼Œåªéœ€è¦åœ¨åŸç‰ˆé¢„å¤„ç†ç»“æœå‡ºæ¥ä¹‹ååŠ ä¸Š.numpy()å³å¯
+x = np.array(
         [
             0,
             97,
@@ -46,15 +45,13 @@ x = np.expand_dims(
             104,
             0,
         ]
-    ),
-    0
-)
+    )
 tone = np.zeros_like(x)
 language = np.zeros_like(x)
 sid = np.array([0])
-bert = np.random.randn(x.shape[1], 1024)
-ja_bert = np.random.randn(x.shape[1], 1024)
-en_bert = np.random.randn(x.shape[1], 1024)
+bert = np.random.randn(x.shape[0], 1024)
+ja_bert = np.random.randn(x.shape[0], 1024)
+en_bert = np.random.randn(x.shape[0], 1024)
 emo = np.random.randn(512, 1)
 
 audio = Session(

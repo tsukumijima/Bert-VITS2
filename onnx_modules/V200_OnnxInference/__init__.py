@@ -49,7 +49,6 @@ class OnnxInferenceSession:
         bert_zh,
         bert_jp,
         bert_en,
-        emo,
         sid,
         seed=114514,
         seq_noise_scale=0.8,
@@ -80,7 +79,6 @@ class OnnxInferenceSession:
                 "bert_0": bert_zh.astype(np.float32),
                 "bert_1": bert_jp.astype(np.float32),
                 "bert_2": bert_en.astype(np.float32),
-                "emo": emo.astype(np.float32),
                 "g": g.astype(np.float32),
             },
         )
