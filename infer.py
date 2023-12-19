@@ -164,7 +164,7 @@ def infer(
     # 2.2版本参数位置变了
     # 2.1 参数新增 emotion reference_audio skip_start skip_end
     inferMap_V3 = {
-        "2.1": V210.infer,
+        # "2.1": V210.infer,
     }
     # 支持中日英三语版本
     inferMap_V2 = {
