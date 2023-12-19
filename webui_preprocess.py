@@ -176,4 +176,4 @@ if __name__ == "__main__":
         clap_gen_btn.click(clap_gen, inputs=[data_dir], outputs=[info])
 
     webbrowser.open("http://127.0.0.1:7860")
-    app.launch(share=False, server_port=7860)
+    app.launch(share=False, server_name='0.0.0.0', server_port=7860)
