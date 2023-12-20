@@ -548,5 +548,6 @@ if __name__ == "__main__":
         )
 
     print("The inference page is available.")
-    webbrowser.open(f"http://127.0.0.1:{config.webui_config.port}")
+    # webbrowser.open(f"http://127.0.0.1:{config.webui_config.port}")
+    print(f'Please visit http://127.0.0.1:{config.webui_config.port} to use the Web UI.')
     app.launch(share=config.webui_config.share, server_name='0.0.0.0', server_port=config.webui_config.port)

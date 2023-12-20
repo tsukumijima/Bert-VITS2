@@ -162,5 +162,6 @@ if __name__ == "__main__":
         preprocess_text_btn.click(preprocess_text, inputs=[data_dir], outputs=[info])
         bert_gen_btn.click(bert_gen, inputs=[data_dir], outputs=[info])
 
-    webbrowser.open("http://127.0.0.1:7860")
+    # webbrowser.open("http://127.0.0.1:7860")
+    print('Please visit http://127.0.0.1:7860 to use the Web UI.')
     app.launch(share=False, server_name='0.0.0.0', server_port=7860)
