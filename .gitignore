@@ -165,7 +165,6 @@ cython_debug/
 
 filelists/*
 !/filelists/esd.list
-data/*
 /*.yml
 !/default_config.yml
 /Web/
@@ -179,10 +178,8 @@ data/*
 asr_transcript.py
 extract_list.py
 dataset
-/Data
 Model
 raw/
 logs/
-Data/*
 /onnx
 /.vs
