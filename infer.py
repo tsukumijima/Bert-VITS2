@@ -19,49 +19,49 @@ import numpy as np
 from models import SynthesizerTrn
 from text.symbols import symbols
 
-# from oldVersion.V210.models import SynthesizerTrn as V210SynthesizerTrn
-# from oldVersion.V210.text import symbols as V210symbols
-# from oldVersion.V200.models import SynthesizerTrn as V200SynthesizerTrn
-# from oldVersion.V200.text import symbols as V200symbols
-# from oldVersion.V111.models import SynthesizerTrn as V111SynthesizerTrn
-# from oldVersion.V111.text import symbols as V111symbols
-# from oldVersion.V110.models import SynthesizerTrn as V110SynthesizerTrn
-# from oldVersion.V110.text import symbols as V110symbols
-# from oldVersion.V101.models import SynthesizerTrn as V101SynthesizerTrn
-# from oldVersion.V101.text import symbols as V101symbols
+from oldVersion.V210.models import SynthesizerTrn as V210SynthesizerTrn
+from oldVersion.V210.text import symbols as V210symbols
+from oldVersion.V200.models import SynthesizerTrn as V200SynthesizerTrn
+from oldVersion.V200.text import symbols as V200symbols
+from oldVersion.V111.models import SynthesizerTrn as V111SynthesizerTrn
+from oldVersion.V111.text import symbols as V111symbols
+from oldVersion.V110.models import SynthesizerTrn as V110SynthesizerTrn
+from oldVersion.V110.text import symbols as V110symbols
+from oldVersion.V101.models import SynthesizerTrn as V101SynthesizerTrn
+from oldVersion.V101.text import symbols as V101symbols
 
-# from oldVersion import V111, V110, V101, V200, V210
+from oldVersion import V111, V110, V101, V200, V210
 
 # 当前版本信息
 latest_version = "2.3"
 
 # 版本兼容
 SynthesizerTrnMap = {
-    # "2.1": V210SynthesizerTrn,
-    # "2.0.2-fix": V200SynthesizerTrn,
-    # "2.0.1": V200SynthesizerTrn,
-    # "2.0": V200SynthesizerTrn,
-    # "1.1.1-fix": V111SynthesizerTrn,
-    # "1.1.1": V111SynthesizerTrn,
-    # "1.1": V110SynthesizerTrn,
-    # "1.1.0": V110SynthesizerTrn,
-    # "1.0.1": V101SynthesizerTrn,
-    # "1.0": V101SynthesizerTrn,
-    # "1.0.0": V101SynthesizerTrn,
+    "2.1": V210SynthesizerTrn,
+    "2.0.2-fix": V200SynthesizerTrn,
+    "2.0.1": V200SynthesizerTrn,
+    "2.0": V200SynthesizerTrn,
+    "1.1.1-fix": V111SynthesizerTrn,
+    "1.1.1": V111SynthesizerTrn,
+    "1.1": V110SynthesizerTrn,
+    "1.1.0": V110SynthesizerTrn,
+    "1.0.1": V101SynthesizerTrn,
+    "1.0": V101SynthesizerTrn,
+    "1.0.0": V101SynthesizerTrn,
 }
 
 symbolsMap = {
-    # "2.1": V210symbols,
-    # "2.0.2-fix": V200symbols,
-    # "2.0.1": V200symbols,
-    # "2.0": V200symbols,
-    # "1.1.1-fix": V111symbols,
-    # "1.1.1": V111symbols,
-    # "1.1": V110symbols,
-    # "1.1.0": V110symbols,
-    # "1.0.1": V101symbols,
-    # "1.0": V101symbols,
-    # "1.0.0": V101symbols,
+    "2.1": V210symbols,
+    "2.0.2-fix": V200symbols,
+    "2.0.1": V200symbols,
+    "2.0": V200symbols,
+    "1.1.1-fix": V111symbols,
+    "1.1.1": V111symbols,
+    "1.1": V110symbols,
+    "1.1.0": V110symbols,
+    "1.0.1": V101symbols,
+    "1.0": V101symbols,
+    "1.0.0": V101symbols,
 }
 
 
@@ -164,24 +164,24 @@ def infer(
     # 2.2版本参数位置变了
     # 2.1 参数新增 emotion reference_audio skip_start skip_end
     inferMap_V3 = {
-        # "2.1": V210.infer,
+        "2.1": V210.infer,
     }
     # 支持中日英三语版本
     inferMap_V2 = {
-        # "2.0.2-fix": V200.infer,
-        # "2.0.1": V200.infer,
-        # "2.0": V200.infer,
-        # "1.1.1-fix": V111.infer_fix,
-        # "1.1.1": V111.infer,
-        # "1.1": V110.infer,
-        # "1.1.0": V110.infer,
+        "2.0.2-fix": V200.infer,
+        "2.0.1": V200.infer,
+        "2.0": V200.infer,
+        "1.1.1-fix": V111.infer_fix,
+        "1.1.1": V111.infer,
+        "1.1": V110.infer,
+        "1.1.0": V110.infer,
     }
     # 仅支持中文版本
     # 在测试中，并未发现两个版本的模型不能互相通用
     inferMap_V1 = {
-        # "1.0.1": V101.infer,
-        # "1.0": V101.infer,
-        # "1.0.0": V101.infer,
+        "1.0.1": V101.infer,
+        "1.0": V101.infer,
+        "1.0.0": V101.infer,
     }
     version = hps.version if hasattr(hps, "version") else latest_version
     # 非当前版本，根据版本号选择合适的infer
