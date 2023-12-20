@@ -420,23 +420,23 @@ if __name__ == "__main__":
         with gr.Row():
             with gr.Column():
                 text = gr.TextArea(
-                    label="输入文本内容",
+                    label="テキスト",
                     placeholder="""
-                    如果你选择语言为\'mix\'，必须按照格式输入，否则报错:
-                        格式举例(zh是中文，jp是日语，不区分大小写；说话人举例:gongzi):
-                         [说话人1]<zh>你好，こんにちは！ <jp>こんにちは，世界。
-                         [说话人2]<zh>你好吗？<jp>元気ですか？
-                         [说话人3]<zh>谢谢。<jp>どういたしまして。
+                    mix を選択した場合、フォーマットで入力しないとエラーになります。
+                        フォーマットの例 (zh は中国語・jp は日本語・大文字・小文字は区別しない 話者の例: gongzi）。
+                         [発言者1】 <zh>你好，こんにちは！<jp>コンニチハ、世界。
+                         [話し手2】 <zh>你好吗？ <jp>元気ですか？
+                         [発言者3】 <zh>谢谢。 <jp>どういたしまして。
                          ...
-                    另外，所有的语言选项都可以用'|'分割长段实现分句生成。
+                    さらに、すべての言語オプションで、長い段落を '|' で分割して節を生成することができます。
                     """,
                 )
-                slicer = gr.Button("快速切分", variant="primary")
+                slicer = gr.Button("クイックスライス", variant="primary")
                 speaker = gr.Dropdown(
                     choices=speakers, value=speakers[0], label="Speaker"
                 )
                 _ = gr.Markdown(
-                    value="提示模式（Prompt mode）：可选文字提示或音频提示，用于生成文字或音频指定风格的声音。\n"
+                    value="プロンプトモード: オプションのテキストプロンプトまたは音声プロンプト。指定されたスタイルのテキストまたは音声でサウンドを生成するために使用されます。\n"
                 )
                 prompt_mode = gr.Radio(
                     ["Text prompt", "Audio prompt"],
@@ -445,7 +445,7 @@ if __name__ == "__main__":
                 )
                 text_prompt = gr.Textbox(
                     label="Text prompt",
-                    placeholder="用文字描述生成风格。如：Happy",
+                    placeholder="スタイルの Prompt (例: Happy)",
                     value="Happy",
                     visible=True,
                 )
@@ -467,23 +467,23 @@ if __name__ == "__main__":
                 language = gr.Dropdown(
                     choices=languages, value=languages[0], label="Language"
                 )
-                btn = gr.Button("生成音频！", variant="primary")
+                btn = gr.Button("音声を生成", variant="primary")
             with gr.Column():
-                with gr.Accordion("融合文本语义", open=False):
+                with gr.Accordion("テキストセマンティクスの融合", open=False):
                     gr.Markdown(
-                        value="使用辅助文本的语意来辅助生成对话（语言保持与主文本相同）\n\n"
-                        "**注意**：不要使用**指令式文本**（如：开心），要使用**带有强烈情感的文本**（如：我好快乐！！！）\n\n"
-                        "效果较不明确，留空即为不使用该功能\n\n"
-                        "**如遇到主文本发音错误，可尝试替换主文本中发音错误的字为正确的谐音字，同时将原主文本填写于此，Weight拉满，以获得正确发音，同时保留原文本的Bert语义信息。**"
+                        value="補助テキストのセマンティクスを使用して対話の生成を支援します (言語はメインテキストと同じままです) 。\n\n"
+                        "**注**: **指示的なテキスト**（例：幸せ）は使用せず、**強い感情を込めたテキスト**（例：とても幸せです！！）を使用すること。\n\n"
+                        "効果はあまり明確ではない。空白のままにしておくと、この機能は使用されない。\n\n"
+                        "主要なテキストの発音に誤りがある場合、正しい発音の同音異字に置き換えてみてほしい。同時に、元の主要なテキストをここに記入し、Weightを最大にして正しい発音を得ることができる。これにより、元のテキストのBertの意味情報も保持される。"
                     )
-                    style_text = gr.Textbox(label="辅助文本")
+                    style_text = gr.Textbox(label="補助テキスト")
                     style_weight = gr.Slider(
                         minimum=0,
                         maximum=1,
                         value=0.7,
                         step=0.1,
                         label="Weight",
-                        info="主文本和辅助文本的bert混合比率，0表示仅主文本，1表示仅辅助文本",
+                        info="BERT の主文と副文の混合比率: 0は主文のみ、1は副文のみを意味します。",
                     )
                 with gr.Row():
                     with gr.Column():
@@ -492,21 +492,21 @@ if __name__ == "__main__":
                             maximum=5,
                             value=0.2,
                             step=0.1,
-                            label="句间停顿(秒)，勾选按句切分才生效",
+                            label="文間の一時停止 (秒): チェックを入れると文ごとに分割されて有効になります。",
                         )
                         interval_between_para = gr.Slider(
                             minimum=0,
                             maximum=10,
                             value=1,
                             step=0.1,
-                            label="段间停顿(秒)，需要大于句间停顿才有效",
+                            label="段落間の一時停止 (秒): 効果を発揮するには、文間の一時停止よりも長くする必要があります。",
                         )
                         opt_cut_by_sent = gr.Checkbox(
-                            label="按句切分    在按段落切分的基础上再按句子切分文本"
+                            label="文ごとの分割: 段落ごとの分割に加えて、テキストは文ごとに分割されます。"
                         )
-                        slicer = gr.Button("切分生成", variant="primary")
-                text_output = gr.Textbox(label="状态信息")
-                audio_output = gr.Audio(label="输出音频")
+                        slicer = gr.Button("スライス生成", variant="primary")
+                text_output = gr.Textbox(label="ステータスメッセージ")
+                audio_output = gr.Audio(label="音声出力")
                 # explain_image = gr.Image(
                 #     label="参数解释信息",
                 #     show_label=True,
@@ -566,6 +566,6 @@ if __name__ == "__main__":
             outputs=[audio_prompt],
         )
 
-    print("推理页面已开启!")
+    print("The inference page is available.")
     webbrowser.open(f"http://127.0.0.1:{config.webui_config.port}")
     app.launch(share=config.webui_config.share, server_name='0.0.0.0', server_port=config.webui_config.port)
