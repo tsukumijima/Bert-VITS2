@@ -497,7 +497,7 @@ if __name__ == "__main__":
                         interval_between_para = gr.Slider(
                             minimum=0,
                             maximum=10,
-                            value=1,
+                            value=0.4,
                             step=0.1,
                             label="段落間の一時停止 (秒): 効果を発揮するには、文間の一時停止よりも長くする必要があります。",
                         )
