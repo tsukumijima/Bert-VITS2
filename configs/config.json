@@ -3,14 +3,14 @@
     "log_interval": 200,
     "eval_interval": 1000,
     "seed": 42,
-    "epochs": 1000,
+    "epochs": 50,
     "learning_rate": 0.0002,
     "betas": [
       0.8,
       0.99
     ],
     "eps": 1e-09,
-    "batch_size": 16,
+    "batch_size": 4,
     "bf16_run": false,
     "fp16_run": false,
     "lr_decay": 0.99996,
@@ -38,7 +38,7 @@
     "mel_fmin": 0.0,
     "mel_fmax": null,
     "add_blank": true,
-    "n_speakers": 512,
+    "n_speakers": 850,
     "cleaned_text": true,
     "spk2id": {
       "派蒙_ZH": 0,
