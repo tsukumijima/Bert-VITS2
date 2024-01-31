@@ -1,10 +1,11 @@
 """
-api服务 多版本多模型 fastapi实现
+api服务，网页后端 多版本多模型 fastapi实现
+原 server_fastapi
 """
+
 import logging
 import gc
 import random
-
 import librosa
 import gradio
 import numpy as np
@@ -19,13 +20,14 @@ import torch
 import webbrowser
 import psutil
 import GPUtil
-from typing import Dict, Optional, List, Set, Union
+from typing import Dict, Optional, List, Set, Union, Tuple
 import os
 from tools.log import logger
 from urllib.parse import unquote
 
 from infer import infer, get_net_g, latest_version
 import tools.translate as trans
+from tools.sentence import split_by_language
 from re_matching import cut_sent
 
 
@@ -108,7 +110,9 @@ class Models:
                 device=device,
                 language=language,
             )
-            logger.success(f"添加模型{model_path}，使用配置文件{os.path.realpath(config_path)}")
+            logger.success(
+                f"添加模型{model_path}，使用配置文件{os.path.realpath(config_path)}"
+            )
         else:
             # 获取一个指向id
             m_id = next(iter(self.path2ids[model_path]))
@@ -208,6 +212,8 @@ if __name__ == "__main__":
         style_weight: float = 0.7,
     ) -> Union[Response, Dict[str, any]]:
         """TTS实现函数"""
+
+        # 检查
         # 检查模型是否存在
         if model_id not in loaded_models.models.keys():
             logger.error(f"/voice 请求错误：模型model_id={model_id}未加载")
@@ -245,54 +251,96 @@ if __name__ == "__main__":
             # 2.2 适配
             if loaded_models.models[model_id].version == "2.2":
                 ref_audio, _ = librosa.load(ref_audio, 48000)
-
         else:
             ref_audio = reference_audio
-        if not auto_split:
-            with torch.no_grad():
-                audio = infer(
-                    text=text,
-                    sdp_ratio=sdp_ratio,
-                    noise_scale=noise,
-                    noise_scale_w=noisew,
-                    length_scale=length,
-                    sid=speaker_name,
-                    language=language,
-                    hps=loaded_models.models[model_id].hps,
-                    net_g=loaded_models.models[model_id].net_g,
-                    device=loaded_models.models[model_id].device,
-                    emotion=emotion,
-                    reference_audio=ref_audio,
-                    style_text=style_text,
-                    style_weight=style_weight,
-                )
-                audio = gradio.processing_utils.convert_to_16_bit_wav(audio)
+
+        # 改动：增加使用 || 对文本进行主动切分
+        # 切分优先级： || → auto/mix → auto_split
+        text2 = text.replace("\n", "").lstrip()
+        texts: List[str] = text2.split("||")
+
+        # 对于mix和auto的说明：出于版本兼容性的考虑，暂时无法使用multilang的方式进行推理
+        if language == "MIX":
+            text_language_speakers: List[Tuple[str, str, str]] = []
+            for _text in texts:
+                speaker_pieces = _text.split("[")  # 按说话人分割多块
+                for speaker_piece in speaker_pieces:
+                    if speaker_piece == "":
+                        continue
+                    speaker_piece2 = speaker_piece.split("]")
+                    if len(speaker_piece2) != 2:
+                        return {
+                            "status": 21,
+                            "detail": "MIX语法错误",
+                        }
+                    speaker = speaker_piece2[0].strip()
+                    lang_pieces = speaker_piece2[1].split("<")
+                    for lang_piece in lang_pieces:
+                        if lang_piece == "":
+                            continue
+                        lang_piece2 = lang_piece.split(">")
+                        if len(lang_piece2) != 2:
+                            return {
+                                "status": 21,
+                                "detail": "MIX语法错误",
+                            }
+                        lang = lang_piece2[0].strip()
+                        if lang.upper() not in ["ZH", "EN", "JP"]:
+                            return {
+                                "status": 21,
+                                "detail": "MIX语法错误",
+                            }
+                        t = lang_piece2[1]
+                        text_language_speakers.append((t, lang.upper(), speaker))
+
+        elif language == "AUTO":
+            text_language_speakers: List[Tuple[str, str, str]] = [
+                (final_text, language.upper().replace("JA", "JP"), speaker_name)
+                for sub_list in [
+                    split_by_language(_text, target_languages=["zh", "ja", "en"])
+                    for _text in texts
+                    if _text != ""
+                ]
+                for final_text, language in sub_list
+                if final_text != ""
+            ]
         else:
-            texts = cut_sent(text)
-            audios = []
-            with torch.no_grad():
-                for t in texts:
-                    audios.append(
-                        infer(
-                            text=t,
-                            sdp_ratio=sdp_ratio,
-                            noise_scale=noise,
-                            noise_scale_w=noisew,
-                            length_scale=length,
-                            sid=speaker_name,
-                            language=language,
-                            hps=loaded_models.models[model_id].hps,
-                            net_g=loaded_models.models[model_id].net_g,
-                            device=loaded_models.models[model_id].device,
-                            emotion=emotion,
-                            reference_audio=ref_audio,
-                            style_text=style_text,
-                            style_weight=style_weight,
-                        )
+            text_language_speakers: List[Tuple[str, str, str]] = [
+                (_text, language, speaker_name) for _text in texts if _text != ""
+            ]
+
+        if auto_split:
+            text_language_speakers: List[Tuple[str, str, str]] = [
+                (final_text, lang, speaker)
+                for _text, lang, speaker in text_language_speakers
+                for final_text in cut_sent(_text)
+            ]
+
+        audios = []
+        with torch.no_grad():
+            for _text, lang, speaker in text_language_speakers:
+                audios.append(
+                    infer(
+                        text=_text,
+                        sdp_ratio=sdp_ratio,
+                        noise_scale=noise,
+                        noise_scale_w=noisew,
+                        length_scale=length,
+                        sid=speaker,
+                        language=lang,
+                        hps=loaded_models.models[model_id].hps,
+                        net_g=loaded_models.models[model_id].net_g,
+                        device=loaded_models.models[model_id].device,
+                        emotion=emotion,
+                        reference_audio=ref_audio,
+                        style_text=style_text,
+                        style_weight=style_weight,
                     )
-                    audios.append(np.zeros(int(44100 * 0.2)))
-                audio = np.concatenate(audios)
-                audio = gradio.processing_utils.convert_to_16_bit_wav(audio)
+                )
+                # audios.append(np.zeros(int(44100 * 0.2)))
+            # audios.pop()
+            audio = np.concatenate(audios)
+            audio = gradio.processing_utils.convert_to_16_bit_wav(audio)
         with BytesIO() as wavContent:
             wavfile.write(
                 wavContent, loaded_models.models[model_id].hps.data.sampling_rate, audio
@@ -363,7 +411,7 @@ if __name__ == "__main__":
         style_text: Optional[str] = Query(None, description="风格文本"),
         style_weight: float = Query(0.7, description="风格权重"),
     ):
-        """语音接口"""
+        """语音接口，不建议使用"""
         logger.info(
             f"{request.client.host}:{request.client.port}/voice  { unquote(str(request.query_params) )}"
         )
@@ -413,7 +461,8 @@ if __name__ == "__main__":
         request: Request,
         model_path: str = Query(..., description="添加模型路径"),
         config_path: str = Query(
-            None, description="添加模型配置文件路径，不填则使用./config.json或../config.json"
+            None,
+            description="添加模型配置文件路径，不填则使用./config.json或../config.json",
         ),
         device: str = Query("cuda", description="推理使用设备"),
         language: str = Query("ZH", description="模型默认语言"),
@@ -429,7 +478,9 @@ if __name__ == "__main__":
             elif os.path.isfile(os.path.join(model_dir, "../config.json")):
                 config_path = os.path.join(model_dir, "../config.json")
             else:
-                logger.error("/models/add 模型添加失败：未在模型所在目录以及上级目录找到config.json文件")
+                logger.error(
+                    "/models/add 模型添加失败：未在模型所在目录以及上级目录找到config.json文件"
+                )
                 return {
                     "status": 15,
                     "detail": "查询未传入配置文件路径，同时默认路径./与../中不存在配置文件config.json。",
@@ -477,9 +528,11 @@ if __name__ == "__main__":
                 # 对模型文件按步数排序
                 model_files = sorted(
                     model_files,
-                    key=lambda pth: int(pth.lstrip("G_").rstrip(".pth"))
-                    if pth.lstrip("G_").rstrip(".pth").isdigit()
-                    else 10**10,
+                    key=lambda pth: (
+                        int(pth.lstrip("G_").rstrip(".pth"))
+                        if pth.lstrip("G_").rstrip(".pth").isdigit()
+                        else 10**10
+                    ),
                 )
                 result[file] = model_files
                 models_dir = os.path.join(sub_dir, "models")
@@ -496,9 +549,11 @@ if __name__ == "__main__":
                     # 对模型文件按步数排序
                     model_files = sorted(
                         model_files,
-                        key=lambda pth: int(pth.lstrip("models/G_").rstrip(".pth"))
-                        if pth.lstrip("models/G_").rstrip(".pth").isdigit()
-                        else 10**10,
+                        key=lambda pth: (
+                            int(pth.lstrip("models/G_").rstrip(".pth"))
+                            if pth.lstrip("models/G_").rstrip(".pth").isdigit()
+                            else 10**10
+                        ),
                     )
                     result[file] += model_files
                 if len(result[file]) == 0:

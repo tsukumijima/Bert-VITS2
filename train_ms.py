@@ -13,7 +13,6 @@ import logging
 from config import config
 import argparse
 import datetime
-import gc
 
 logging.getLogger("numba").setLevel(logging.WARNING)
 import commons
@@ -41,7 +40,7 @@ from text.symbols import symbols
 
 torch.backends.cuda.matmul.allow_tf32 = True
 torch.backends.cudnn.allow_tf32 = (
-    True  # If encontered training problem,please try to disable TF32.
+    True  # If encountered training problem,please try to disable TF32.
 )
 torch.set_float32_matmul_precision("medium")
 torch.backends.cuda.sdp_kernel("flash")
@@ -103,7 +102,7 @@ def run():
     args = parser.parse_args()
     model_dir = os.path.join(args.model, config.train_ms_config.model)
     if not os.path.exists(model_dir):
-        os.makedirs(model_dir)
+        os.makedirs(model_dir, exist_ok=True)
     hps = utils.get_hparams_from_file(args.config)
     hps.model_dir = model_dir
     # 比较路径是否相同
@@ -274,9 +273,9 @@ def run():
                 utils.latest_checkpoint_path(hps.model_dir, "DUR_*.pth"),
                 net_dur_disc,
                 optim_dur_disc,
-                skip_optimizer=hps.train.skip_optimizer
-                if "skip_optimizer" in hps.train
-                else True,
+                skip_optimizer=(
+                    hps.train.skip_optimizer if "skip_optimizer" in hps.train else True
+                ),
             )
             if not optim_dur_disc.param_groups[0].get("initial_lr"):
                 optim_dur_disc.param_groups[0]["initial_lr"] = dur_resume_lr
@@ -288,17 +287,17 @@ def run():
             utils.latest_checkpoint_path(hps.model_dir, "G_*.pth"),
             net_g,
             optim_g,
-            skip_optimizer=hps.train.skip_optimizer
-            if "skip_optimizer" in hps.train
-            else True,
+            skip_optimizer=(
+                hps.train.skip_optimizer if "skip_optimizer" in hps.train else True
+            ),
         )
         _, optim_d, d_resume_lr, epoch_str = utils.load_checkpoint(
             utils.latest_checkpoint_path(hps.model_dir, "D_*.pth"),
             net_d,
             optim_d,
-            skip_optimizer=hps.train.skip_optimizer
-            if "skip_optimizer" in hps.train
-            else True,
+            skip_optimizer=(
+                hps.train.skip_optimizer if "skip_optimizer" in hps.train else True
+            ),
         )
         if not optim_g.param_groups[0].get("initial_lr"):
             optim_g.param_groups[0]["initial_lr"] = g_resume_lr
@@ -323,9 +322,9 @@ def run():
             utils.latest_checkpoint_path(hps.model_dir, "WD_*.pth"),
             net_wd,
             optim_wd,
-            skip_optimizer=hps.train.skip_optimizer
-            if "skip_optimizer" in hps.train
-            else True,
+            skip_optimizer=(
+                hps.train.skip_optimizer if "skip_optimizer" in hps.train else True
+            ),
         )
         if not optim_wd.param_groups[0].get("initial_lr"):
             optim_wd.param_groups[0]["initial_lr"] = wd_resume_lr
@@ -734,8 +733,8 @@ def train_and_evaluate(
 
         global_step += 1
 
-    gc.collect()
-    torch.cuda.empty_cache()
+    # gc.collect()
+    # torch.cuda.empty_cache()
     if rank == 0:
         logger.info("====> Epoch: {}".format(epoch))
 
