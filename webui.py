@@ -415,66 +415,67 @@ if __name__ == "__main__":
     )
     speaker_ids = hps.data.spk2id
     speakers = list(speaker_ids.keys())
-    languages = ["JP", "ZH", "EN", "mix", "auto"]
+    languages = ["JP"]
     with gr.Blocks() as app:
         with gr.Row():
             with gr.Column():
-                text = gr.TextArea(
-                    label="テキスト",
-                    placeholder="""
-                    mix を選択した場合、フォーマットで入力しないとエラーになります。
-                        フォーマットの例 (zh は中国語・jp は日本語・大文字・小文字は区別しない 話者の例: gongzi）。
-                         [発言者1】 <zh>你好，こんにちは！<jp>コンニチハ、世界。
-                         [話し手2】 <zh>你好吗？ <jp>元気ですか？
-                         [発言者3】 <zh>谢谢。 <jp>どういたしまして。
-                         ...
-                    さらに、すべての言語オプションで、長い段落を '|' で分割して節を生成することができます。
-                    """,
-                )
-                slicer = gr.Button("クイックスライス", variant="primary")
-                speaker = gr.Dropdown(
-                    choices=speakers, value=speakers[0], label="Speaker"
-                )
-                _ = gr.Markdown(
-                    value="プロンプトモード: オプションのテキストプロンプトまたは音声プロンプト。指定されたスタイルのテキストまたは音声でサウンドを生成するために使用されます。\n"
-                )
-                prompt_mode = gr.Radio(
-                    ["Text prompt", "Audio prompt"],
-                    label="Prompt Mode",
-                    value="Text prompt",
-                )
-                text_prompt = gr.Textbox(
-                    label="Text prompt",
-                    placeholder="スタイルの Prompt (例: Happy)",
-                    value="Happy",
-                    visible=True,
-                )
-                audio_prompt = gr.Audio(
-                    label="Audio prompt", type="filepath", visible=False
-                )
-                sdp_ratio = gr.Slider(
-                    minimum=0, maximum=1, value=0.2, step=0.1, label="SDP Ratio"
-                )
-                noise_scale = gr.Slider(
-                    minimum=0.1, maximum=2, value=0.6, step=0.1, label="Noise"
-                )
-                noise_scale_w = gr.Slider(
-                    minimum=0.1, maximum=2, value=0.8, step=0.1, label="Noise_W"
-                )
-                length_scale = gr.Slider(
-                    minimum=0.1, maximum=2, value=1.0, step=0.1, label="Length"
-                )
-                language = gr.Dropdown(
-                    choices=languages, value=languages[0], label="Language"
-                )
-                btn = gr.Button("音声を生成", variant="primary")
+                with gr.Group():
+                    text = gr.TextArea(
+                        label="読み上げテキスト",
+                        placeholder="""Bert-VITS2 は、読み上げテキストが示す感情に合わせて、自動的に抑揚や感情表現を調整します。
+例えば「ありがとうございます！」なら前向きに明るい声で、「とても残念です…。」なら残念そうな声で読み上げできます。
+句読点の有無や、！？… などの文末記号の使い方次第で、抑揚や感情表現が大きく変わります。
+意図した表現にならないときは、読み上げテキストを工夫してみてください。
+
+Bert-VITS2 は行の最初の方の文から読み取れる感情表現を後まで引き継ぐ傾向があるため、まとまった文ごとに改行で区切り、[音声を行ごとに分割して生成] ボタンを押すとより自然な音声を生成できます。
+ただし、「とても嬉しいです。しかし残念です。」のように真逆の感情を含む文では、同じ行に含めた方がより自然な繋がりになることもあります。""",
+                    )
+                    # slicer = gr.Button("クイックスライス", variant="primary")
+                    speaker = gr.Dropdown(
+                        choices=speakers, value=speakers[0], label="Speaker"
+                    )
+                    language = gr.Dropdown(
+                        choices=languages, value=languages[0], label="Language"
+                    )
+                with gr.Group():
+                    sdp_ratio = gr.Slider(
+                        minimum=0, maximum=1, value=0.4, step=0.1, label="抑揚の強さ (SDP Ratio): 0.2 ~ 0.6 の範囲がおすすめです。0 にすると棒読みになります。"
+                    )
+                    noise_scale = gr.Slider(
+                        minimum=0.1, maximum=2, value=0.6, step=0.1, label="Noise"
+                    )
+                    noise_scale_w = gr.Slider(
+                        minimum=0.1, maximum=2, value=0.8, step=0.1, label="Noise_W"
+                    )
+                    length_scale = gr.Slider(
+                        minimum=0.1, maximum=2, value=1.0, step=0.1, label="Length"
+                    )
             with gr.Column():
-                with gr.Accordion("テキストセマンティクスの融合", open=False):
+                with gr.Accordion("テキストプロンプト / 音声プロンプト (オプション)", open=False):
                     gr.Markdown(
-                        value="補助テキストのセマンティクスを使用して対話の生成を支援します (言語はメインテキストと同じままです) 。\n\n"
-                        "**注**: **指示的なテキスト**（例：幸せ）は使用せず、**強い感情を込めたテキスト**（例：とても幸せです！！）を使用すること。\n\n"
-                        "効果はあまり明確ではない。空白のままにしておくと、この機能は使用されない。\n\n"
-                        "主要なテキストの発音に誤りがある場合、正しい発音の同音異字に置き換えてみてほしい。同時に、元の主要なテキストをここに記入し、Weightを最大にして正しい発音を得ることができる。これにより、元のテキストのBertの意味情報も保持される。"
+                        value="指定されたテキストプロンプト / 音声プロンプトのスタイルを持つ音声を生成できます。<br>"
+                        "**現状日本語ではほとんど効果がありません。読み上げテキスト自体の感情表現を工夫した方が、より効果的です。**"
+                    )
+                    prompt_mode = gr.Radio(
+                        ["Text prompt", "Audio prompt"],
+                        label="Prompt Mode",
+                        value="Text prompt",
+                    )
+                    text_prompt = gr.Textbox(
+                        label="Text prompt",
+                        placeholder="スタイルの Prompt (例: Happy)",
+                        value="",
+                        visible=True,
+                    )
+                    audio_prompt = gr.Audio(
+                        label="Audio prompt", type="filepath", visible=False
+                    )
+                with gr.Accordion("テキストセマンティクスの融合 (オプション)", open=False):
+                    gr.Markdown(
+                        value="補助テキストのセマンティクスを使用して合成時の抑揚や感情表現を調整できます。実際に読み上げられる文章は読み上げテキストと同じです。<br>"
+                        "**注意: 指示/宣言的なテキスト (例: 幸せ) は使用せず、強い感情を込めたテキスト (例: とても幸せです！！) を使用してください。**\n\n"
+                        "効果はあまり明確ではありません。空白のままにしておくと、この機能は使用されません。<br>"
+                        "読み上げテキストの発音に誤りがある場合、正しい発音の同音異字に置き換えてみてください。同時に、元の読み上げテキストをここに記入し、Weight を最大にすることで正しい発音を得ることができます。これにより、元のテキストの Bert の意味情報も保持されます。"
                     )
                     style_text = gr.Textbox(label="補助テキスト")
                     style_weight = gr.Slider(
@@ -483,29 +484,30 @@ if __name__ == "__main__":
                         value=0.7,
                         step=0.1,
                         label="Weight",
-                        info="BERT の主文と副文の混合比率: 0は主文のみ、1は副文のみを意味します。",
+                        info="Bert の読み上げテキストと補助テキストの混合比率 / 0 は読み上げテキストのみ、1 は補助テキストのみを意味します。",
                     )
                 with gr.Row():
                     with gr.Column():
-                        interval_between_sent = gr.Slider(
-                            minimum=0,
-                            maximum=5,
-                            value=0.2,
-                            step=0.1,
-                            label="文間の一時停止 (秒): チェックを入れると文ごとに分割されて有効になります。",
-                        )
                         interval_between_para = gr.Slider(
                             minimum=0,
                             maximum=10,
                             value=0.4,
                             step=0.1,
-                            label="段落間の一時停止 (秒): 効果を発揮するには、文間の一時停止よりも長くする必要があります。",
+                            label="行と行の間での一時停止 (秒): [文と文の間での一時停止] よりも長い秒数に設定すると効果的です。",
+                        )
+                        interval_between_sent = gr.Slider(
+                            minimum=0,
+                            maximum=5,
+                            value=0.2,
+                            step=0.1,
+                            label="文と文の間での一時停止 (秒): [文ごとに分割して生成] にチェックを入れたときのみ有効です。",
                         )
                         opt_cut_by_sent = gr.Checkbox(
-                            label="文ごとの分割: 段落ごとの分割に加えて、テキストは文ごとに分割されます。"
+                            label="一文ごとに分割して生成: 行ごとの分割に加えて、さらに読み上げテキストを一文ごとに分割して生成します。"
                         )
-                        slicer = gr.Button("スライス生成", variant="primary")
-                text_output = gr.Textbox(label="ステータスメッセージ")
+                        slicer = gr.Button("音声を行ごとに分割して生成 (おすすめ)", variant="primary")
+                        btn = gr.Button("音声を分割せずに生成")
+                text_output = gr.Textbox(label="ステータス:", visible=False)
                 audio_output = gr.Audio(label="音声出力")
                 # explain_image = gr.Image(
                 #     label="参数解释信息",
