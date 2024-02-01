@@ -439,7 +439,7 @@ Bert-VITS2 は行の最初の方の文から読み取れる感情表現を後ま
                     )
                 with gr.Group():
                     sdp_ratio = gr.Slider(
-                        minimum=0, maximum=1, value=0.4, step=0.1, label="抑揚の強さ (SDP Ratio): 0.2 ~ 0.6 の範囲がおすすめです。0 にすると棒読みになります。"
+                        minimum=0, maximum=1, value=0.5, step=0.1, label="抑揚の強さ (SDP Ratio): 0.2 ~ 0.6 の範囲がおすすめです。0 にすると棒読みになります。"
                     )
                     noise_scale = gr.Slider(
                         minimum=0.1, maximum=2, value=0.6, step=0.1, label="Noise"
