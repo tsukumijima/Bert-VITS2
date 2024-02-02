@@ -26,7 +26,7 @@ resample:
 # 注意， “:” 后需要加空格
 preprocess_text:
   # 原始文本文件路径，文本格式应为{wav_path}|{speaker_name}|{language}|{text}。
-  transcription_path: "filelists/speaker.list"
+  transcription_path: "filelists/transcripts.list"
   # 数据清洗后文本路径，可以不填。不填则将在原始文本目录生成
   cleaned_path: ""
   # 训练集路径
